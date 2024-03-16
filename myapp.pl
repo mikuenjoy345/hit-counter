@@ -19,6 +19,7 @@ app->hook(before_server_start => sub ($server, $app) {
 });
 
 get '/' => sub ($c) {
+	update_counter(); # hypnotoad or w/e may run on threads or something. awkward.
 	make_image(to_number_length($counter++));
 	$c->res->headers->header('Content-Security-Policy' => 'img-src * artemis.venus.place');
 	$c->res->headers->header('Server' => 'nginx/1.22.1'); # lie :)
@@ -27,6 +28,12 @@ get '/' => sub ($c) {
 	syswrite $fh, $counter, length $counter, 0;
 	close $fh;
 };
+
+sub update_counter () {
+	open my $fh, '<', $counter_file;
+	sysread $fh, $counter, 20; 
+	close $fh;
+}
 
 sub to_number_length ($counter) {
 	while (length $counter lt 6) {
