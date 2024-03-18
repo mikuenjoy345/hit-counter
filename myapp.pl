@@ -7,31 +7,31 @@ my $number_length = 6;
 
 app->hook(before_server_start => sub ($server, $app) {
 	if (! (-e $counter_file)) {
-		open my $fh, '>', $counter_file;
-		syswrite $fh, $counter, length $counter, 0;
-		close $fh;
+		write_counter();
 	}
-	open my $fh, '<', $counter_file;
-	sysread $fh, $counter, 20; # 20 bytes to read which is more than enough for a counter
-	close $fh;
+	read_counter();
 	
 	-e '/bin/montage' or die 'ImageMagick not installed? `/bin/montage`';
 });
 
 get '/' => sub ($c) {
-	update_counter(); # hypnotoad or w/e may run on threads or something. awkward.
+	read_counter(); # hypnotoad or w/e may run on threads or something. awkward.
 	make_image(to_number_length($counter++));
 	$c->res->headers->header('Content-Security-Policy' => 'img-src * artemis.venus.place');
 	$c->res->headers->header('Server' => 'nginx/1.22.1'); # lie :)
 	$c->reply->file('tmp/counter.png');
+	write_counter();
+};
+
+sub write_counter () {
 	open my $fh, '>', $counter_file;
 	syswrite $fh, $counter, length $counter, 0;
 	close $fh;
-};
+}
 
-sub update_counter () {
+sub read_counter () {
 	open my $fh, '<', $counter_file;
-	sysread $fh, $counter, 20; 
+	sysread $fh, $counter, 20; # 20 bytes to read which is more than enough for a counter
 	close $fh;
 }
 
@@ -65,16 +65,3 @@ sub make_image ($counter) {
 }
 
 app->start;
-__DATA__
-
-@@ index.html.ep
-% layout 'default';
-% title 'Welcome';
-<h1>Welcome to the Mojolicious real-time web framework!</h1>
-
-@@ layouts/default.html.ep
-<!DOCTYPE html>
-<html>
-  <head><title><%= title %></title></head>
-  <body><%= content %></body>
-</html>
