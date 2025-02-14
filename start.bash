@@ -6,5 +6,7 @@ export COUNTER_NUMBER_LENGTH=6                       # how many numbers to show 
 export COUNTER_NUMBER_FILE=./counter.numb
 export COUNTER_NUMBER_SAVE_FREQUENCY=60              # generally, how much time should pass before the count gets saved (*during* accept(), no alarm() or anything fancy)
 export CONTENT_SECURITY_POLICY=artemis.venus.place
+export COUNTER_TEMP_DIR=./tmp/                       # note ending '/'
+export COUNTER_IMAGE_FILE=counter.png
 
-(trap 'kill 0' SIGINT; hypnotoad -f ./myapp.pl & ./counter-server.pl)
+(trap 'kill 0' SIGINT; ./counter-server.pl & hypnotoad -f ./myapp.pl & wait)

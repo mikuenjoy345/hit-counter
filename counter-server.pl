@@ -23,7 +23,7 @@ $SIG{INT} = sub { die "Caught a sigint, killing myself gracefully" };
 my $counter = 0;
 my $socket = $ENV{ COUNTER_SERVER_SOCKET };
 my $counter_file = $ENV{ COUNTER_NUMBER_FILE };
-my $save_frequency = $ENV{ COUNTER_NUMBER_SAVE_FREQUENCY  } # seconds
+my $save_frequency = $ENV{ COUNTER_NUMBER_SAVE_FREQUENCY }; # seconds
 my $last_save_time = time;
 
 debug "read counter_file '$counter_file'";

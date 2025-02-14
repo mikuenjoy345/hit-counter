@@ -8,6 +8,8 @@ my $number_length = $ENV{ COUNTER_NUMBER_LENGTH };
 my $counter_socket = $ENV{ COUNTER_SERVER_SOCKET };
 my $timeout = $ENV{ COUNTER_IMAGE_TIMEOUT }; # in seconds, for creating images
 my $content_security_police = $ENV{ CONTENT_SECURITY_POLICY  };
+my $temp_dir = $ENV{ COUNTER_TEMP_DIR };
+my $image_file = $ENV{ COUNTER_IMAGE_FILE };
 
 app->hook(before_server_start => sub ($server, $app) {
 	my $c = IO::Socket::UNIX->new(
@@ -29,7 +31,7 @@ get '/' => sub ($c) {
 	make_image(to_number_length($counter));
 	$c->res->headers->header('Content-Security-Policy' => "img-src * artemis.venus.place");
 	$c->res->headers->header('Server' => 'nginx/1.22.1'); # lie :)
-	$c->reply->file('tmp/counter.png');
+	$c->reply->file("${temp_dir}${image_file}");
 };
 
 sub update_counter () {
@@ -61,11 +63,11 @@ sub make_image ($counter) {
 			push @args, "asset/$i.png";
 		}
 		push @args, qw( -tile ),  "${number_length}x1", qw( -geometry +0+0 -background none -scale 50 );
-		my $o = 'tmp/counter.png';
+		my $o = "$temp_dir/$image_file";
 		push @args, $o;
 
-		if (! (-w 'tmp/' and -d 'tmp/')) {
-			mkdir 'tmp';
+		if (! (-w $temp_dir and -d $temp_dir)) {
+			mkdir $temp_dir;
 		}
 		
 		# user can refresh the page faster than this can run
