@@ -1,53 +1,51 @@
 #!/usr/bin/env perl
 use Mojolicious::Lite -signatures;
-use Fcntl ':flock';
+use IO::Socket::UNIX;
 ## no critic (prototypes)
 
-my $counter_file = 'counter.numb';
 my $counter = 0;
-my $number_length = 6;
+my $number_length = $ENV{ COUNTER_NUMBER_LENGTH };
+my $counter_socket = $ENV{ COUNTER_SERVER_SOCKET };
+my $timeout = $ENV{ COUNTER_IMAGE_TIMEOUT }; # in seconds, for creating images
+my $content_security_police = $ENV{ CONTENT_SECURITY_POLICY  };
 
 app->hook(before_server_start => sub ($server, $app) {
-	if (! (-e $counter_file)) {
-		open my $fh, '>', $counter_file; # TODO:  what if opening fails?
-		flock($fh, LOCK_EX);
-		syswrite $fh, $counter, length $counter, 0;
-		close $fh;
+	my $c = IO::Socket::UNIX->new(
+		Type => SOCK_STREAM(),
+		Peer => $counter_socket,
+	) or die "Cannot connect to counter server ('$counter_socket'): $!";
+	print $c 'ping';
+	$c->shutdown(SHUT_WR);
+	$c->recv(my $buff, 12);
+	$c->close();
+	if ($buff ne 'pong') {
+		die "Inapproriate reply from counter server (expected 'pong'); $buff";
 	}
-	else {
-		open my $fh, '<', $counter_file; # TODO:  what if opening fails?
-		flock($fh, LOCK_EX);
-		sysread $fh, $counter, 20; # 20 bytes to read which is more than enough for a counter
-		close $fh;
-	}
-	
 	-e '/bin/montage' or die 'ImageMagick not installed? `/bin/montage`';
 });
 
 get '/' => sub ($c) {
 	update_counter();
 	make_image(to_number_length($counter));
-	$c->res->headers->header('Content-Security-Policy' => 'img-src * artemis.venus.place');
+	$c->res->headers->header('Content-Security-Policy' => "img-src * artemis.venus.place");
 	$c->res->headers->header('Server' => 'nginx/1.22.1'); # lie :)
 	$c->reply->file('tmp/counter.png');
 };
 
 sub update_counter () {
-	open my $fh, '+<', $counter_file; # TODO:  what if opening fails?
-	flock($fh, LOCK_EX);
-	sysread ($fh, $counter, 20) or warn "sysread error? $@ $!";
-	$counter++;
-	seek $fh, 0, 0;
-	syswrite ($fh, $counter, length $counter, 0) or warn "syswrite error? $@ $!";
-	my $res = close $fh;
-	if (! $res) {
-		print "close error (update) on $counter_file:  $!\n";
-		# TODO: actually do something about it.
-	}
+	my $good = 1;
+	my $c = IO::Socket::UNIX->new(
+		Type => SOCK_STREAM(),
+		Peer => $counter_socket,
+	) or do {warn "issue connecting to socket ('$counter_socket'): $!"; $counter = 0; return};
+	print $c 'up';
+	$c->shutdown(SHUT_WR);
+	$c->recv($counter, 12); # future proofing... xxx_xxx_xxx_xxx  billions of visitors!
+	$c->close();
 }
 
 sub to_number_length ($counter) {
-	while (length $counter lt 6) {
+	while (length $counter < $number_length) {
 		$counter = "0$counter";
 	}
 	return $counter;
@@ -55,24 +53,28 @@ sub to_number_length ($counter) {
 
 ## returns path for image
 sub make_image ($counter) {
+	state $time_since_last_creation = 0;
 
-	my @args;
-	for my $i (split(//, $counter)) {
-		push @args, "asset/$i.png";
+	if ($time_since_last_creation + $timeout < time) {
+		my @args;
+		for my $i (split(//, $counter)) {
+			push @args, "asset/$i.png";
+		}
+		push @args, qw( -tile ),  "${number_length}x1", qw( -geometry +0+0 -background none -scale 50 );
+		my $o = 'tmp/counter.png';
+		push @args, $o;
+
+		if (! (-w 'tmp/' and -d 'tmp/')) {
+			mkdir 'tmp';
+		}
+		
+		# user can refresh the page faster than this can run
+		# I guess in theory someone can DOS me just by refreshing the page enough times
+		system('/bin/montage', @args); 
+
+		$time_since_last_creation = time;
+		return $o;
 	}
-	push @args, qw( -tile 6x1 -geometry +0+0 -background none -scale 50 );
-	my $o = 'tmp/counter.png';
-	push @args, $o;
-
-	if (! (-w 'tmp/' and -d 'tmp/')) {
-		mkdir 'tmp';
-	}
-	
-	# user can refresh the page faster than this can run
-	# I guess in theory someone can DOS me just by refreshing the page enough times
-	system('/bin/montage', @args); 
-
-	return $o;
 }
 
 app->start;
