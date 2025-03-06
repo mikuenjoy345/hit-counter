@@ -8,5 +8,6 @@ export COUNTER_NUMBER_SAVE_FREQUENCY=60              # generally, how much time 
 export CONTENT_SECURITY_POLICY=artemis.venus.place
 export COUNTER_TEMP_DIR=./tmp/                       # note ending '/'
 export COUNTER_IMAGE_FILE=counter.png
+export COUNTER_ASSET_DIR=./asset/                    # note ending '/'
 
 (trap 'kill 0' SIGINT; ./counter-server.pl & hypnotoad -f ./myapp.pl & wait)

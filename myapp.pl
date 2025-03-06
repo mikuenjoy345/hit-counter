@@ -7,9 +7,10 @@ my $counter = 0;
 my $number_length = $ENV{ COUNTER_NUMBER_LENGTH };
 my $counter_socket = $ENV{ COUNTER_SERVER_SOCKET };
 my $timeout = $ENV{ COUNTER_IMAGE_TIMEOUT }; # in seconds, for creating images
-my $content_security_police = $ENV{ CONTENT_SECURITY_POLICY  };
+my $content_security_policy = $ENV{ CONTENT_SECURITY_POLICY  };
 my $temp_dir = $ENV{ COUNTER_TEMP_DIR };
 my $image_file = $ENV{ COUNTER_IMAGE_FILE };
+my $asset_dir = $ENV{ COUNTER_ASSET_DIR };
 
 app->hook(before_server_start => sub ($server, $app) {
 	my $c = IO::Socket::UNIX->new(
@@ -29,7 +30,7 @@ app->hook(before_server_start => sub ($server, $app) {
 get '/' => sub ($c) {
 	update_counter();
 	make_image(to_number_length($counter));
-	$c->res->headers->header('Content-Security-Policy' => "img-src * artemis.venus.place");
+	$c->res->headers->header('Content-Security-Policy' => "img-src * $content_security_policy");
 	$c->res->headers->header('Server' => 'nginx/1.22.1'); # lie :)
 	$c->reply->file("${temp_dir}${image_file}");
 };
@@ -60,7 +61,7 @@ sub make_image ($counter) {
 	if ($time_since_last_creation + $timeout < time) {
 		my @args;
 		for my $i (split(//, $counter)) {
-			push @args, "asset/$i.png";
+			push @args, "${asset_dir}$i.png";
 		}
 		push @args, qw( -tile ),  "${number_length}x1", qw( -geometry +0+0 -background none -scale 50 );
 		my $o = "$temp_dir/$image_file";
