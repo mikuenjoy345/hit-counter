@@ -11,6 +11,7 @@ my $content_security_policy = $ENV{ CONTENT_SECURITY_POLICY  };
 my $temp_dir = $ENV{ COUNTER_TEMP_DIR };
 my $image_file = $ENV{ COUNTER_IMAGE_FILE };
 my $asset_dir = $ENV{ COUNTER_ASSET_DIR };
+my $hypnotoad_listen = $ENV{ COUNTER_HYPNOTOAD_LISTEN };
 
 app->hook(before_server_start => sub ($server, $app) {
 	my $c = IO::Socket::UNIX->new(
@@ -26,6 +27,12 @@ app->hook(before_server_start => sub ($server, $app) {
 	}
 	-e '/bin/montage' or die 'ImageMagick not installed? `/bin/montage`';
 });
+
+app->config(
+	hypnotoad => {
+		listen => [ $hypnotoad_listen ],
+	}
+);
 
 get '/' => sub ($c) {
 	update_counter();
