@@ -12,6 +12,7 @@ my $temp_dir = $ENV{ COUNTER_TEMP_DIR };
 my $image_file = $ENV{ COUNTER_IMAGE_FILE };
 my $asset_dir = $ENV{ COUNTER_ASSET_DIR };
 my $hypnotoad_listen = $ENV{ COUNTER_HYPNOTOAD_LISTEN };
+my $hypnotoad_pid = $ENV{ COUNTER_HYPNOTOAD_PID };
 
 app->hook(before_server_start => sub ($server, $app) {
 	my $c = IO::Socket::UNIX->new(
@@ -31,6 +32,7 @@ app->hook(before_server_start => sub ($server, $app) {
 app->config(
 	hypnotoad => {
 		listen => [ $hypnotoad_listen ],
+		pid => $hypnotoad_pid,
 	}
 );
 

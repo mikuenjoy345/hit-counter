@@ -10,5 +10,6 @@ export COUNTER_TEMP_DIR=./tmp/                       # note ending '/'
 export COUNTER_IMAGE_FILE=counter.png
 export COUNTER_ASSET_DIR=./asset/                    # note ending '/'
 export COUNTER_HYPNOTOAD_LISTEN=http://127.0.0.1:8080
+export COUNTER_HYPNOTOAD_PID=./hypnotoad.pid
 
 (trap 'kill 0' SIGINT; ./counter-server.pl & hypnotoad -f ./myapp.pl & wait)
