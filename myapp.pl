@@ -13,6 +13,7 @@ my $image_file = $ENV{ COUNTER_IMAGE_FILE };
 my $asset_dir = $ENV{ COUNTER_ASSET_DIR };
 my $hypnotoad_listen = $ENV{ COUNTER_HYPNOTOAD_LISTEN };
 my $hypnotoad_pid = $ENV{ COUNTER_HYPNOTOAD_PID };
+my $montage_scale = $ENV{ COUNTER_MONTAGE_SCALE };
 
 app->hook(before_server_start => sub ($server, $app) {
 	my $c = IO::Socket::UNIX->new(
@@ -72,7 +73,7 @@ sub make_image ($counter) {
 		for my $i (split(//, $counter)) {
 			push @args, "${asset_dir}$i.png";
 		}
-		push @args, qw( -tile ),  "${number_length}x1", qw( -geometry +0+0 -background none -scale 50 );
+		push @args, qw( -tile ),  "${number_length}x1", qw( -geometry +0+0 -background none -scale ), $montage_scale;
 		my $o = "$temp_dir/$image_file";
 		push @args, $o;
 

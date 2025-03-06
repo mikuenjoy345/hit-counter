@@ -11,5 +11,6 @@ export COUNTER_IMAGE_FILE=counter.png
 export COUNTER_ASSET_DIR=./asset/                    # note ending '/'
 export COUNTER_HYPNOTOAD_LISTEN=http://127.0.0.1:8080
 export COUNTER_HYPNOTOAD_PID=./hypnotoad.pid
+export COUNTER_MONTAGE_SCALE=50                      # play with this if you're seeing some weird stuff, 100 = no scale
 
 (trap 'kill 0' SIGINT; ./counter-server.pl & hypnotoad -f ./myapp.pl & wait)
