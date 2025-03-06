@@ -32,7 +32,7 @@ app->hook(before_server_start => sub ($server, $app) {
 app->config(
 	hypnotoad => {
 		listen => [ $hypnotoad_listen ],
-		pid => $hypnotoad_pid,
+		pid_file => $hypnotoad_pid,
 	}
 );
 
