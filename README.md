@@ -8,16 +8,10 @@ Can use custom assets, just make sure they're same size eg 58x40px or something.
 These programs have a couple perl dependencies;
 ```
 Mojolicious
-IO::Socket::UNIX
 ```
 Acquire them somehow.  Mojolicious is installable as
 ```
 # apt install libmojolicious-perl
-```
-
-but for IO::Socket::UNIX that is not possible; one must install from cpan (or cpanminus which is considered better and more lightweight.)
-```
-% cpanm IO::Socket::UNIX
 ```
 ### Non-Perl Dependencies:
 * ImageMagick (specifically montage)
